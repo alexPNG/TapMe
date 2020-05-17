@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>TapMe by alex_png</string>
+		</dict>
+		<dict>
+			<key>alignment</key>
+			<string>0</string>
+			<key>cell</key>
+			<string>PSStaticTextCell</string>
+			<key>cellClass</key>
+			<string>PFHeaderCell</string>
+			<key>height</key>
+			<integer>165</integer>
+			<key>icon</key>
+			<string>banner.png</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>General Settings</string>
+			<key>footerText</key>
+			<string>Enable or disable TapMe. You don’t need to respring in order to apply the changes.</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.alexpng.tapme.prefschanged</string>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.alexpng.tapme</string>
+			<key>key</key>
+			<string>enabled</string>
+			<key>label</key>
+			<string>Enable Tweak</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Haptic Feedback Options</string>
+			<key>footerText</key>
+			<string>Enable or disable Haptic Feedback for the tapping sounds. You don’t need to respring in order to apply the changes.</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.alexpng.tapme.prefschanged</string>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.alexpng.tapme</string>
+			<key>key</key>
+			<string>useHaptic</string>
+			<key>label</key>
+			<string>Haptic Feedback</string>
+		</dict>
+       <dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Type of Haptic Feedback</string>
+			<key>footerText</key>
+			<string>Choose which type of Haptic Feedback to be given for the tapping of icons and folders. You don’t need to respring in order to apply the changes.</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.alexpng.tapme.prefschanged</string>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>default</key>
+			<integer>1</integer>
+			<key>defaults</key>
+			<string>com.alexpng.tapme</string>
+			<key>key</key>
+			<string>hapticType</string>
+			<key>validValues</key>
+				<array>
+					<integer>1</integer>
+					<integer>2</integer>
+					<integer>3</integer>
+				</array>
+			<key>validTitles</key>
+				<array>
+					<string>Light</string>
+					<string>Medium</string>
+					<string>Heavy</string>
+				</array>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Tapping Sounds Selection</string>
+			<key>footerText</key>
+			<string>Choose a sound for when tapping icons and folders. You don’t need to respring in order to apply the changes.</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.alexpng.tapme.prefschanged</string>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<integer>6</integer>
+			<key>defaults</key>
+			<string>com.alexpng.tapme</string>
+			<key>detail</key>
+			<string>PSListItemsController</string>
+			<key>key</key>
+			<string>sounds</string>
+			<key>label</key>
+			<string>Tap Sounds</string>
+			<key>validTitles</key>
+			<array>
+				<string>Bubble 1</string>
+				<string>Bubble 2</string>
+				<string>Cardi B CoronaVirus</string>
+				<string>Cardi B Hehe</string>
+				<string>Cardi B Okuurrr</string>
+				<string>Fart 1</string>
+				<string>Fart 2</string>
+				<string>Gentle</string>
+				<string>Lullaby</string>
+				<string>Me Cago</string>
+				<string>Moan</string>
+				<string>Ouch</string>
+				<string>Pling</string>
+				<string>Pong</string>
+				<string>Press Click 1</string>
+				<string>Press Click 2</string>
+				<string>Quack</string>
+				<string>Rick and Morty 1</string>
+
+				<string>Rick and Morty 2</string>
+				<string>Rick and Morty 3</string>
+				<string>Rick and Morty 4</string>
+				<string>Roblox Oof</string>
+				<string>Siri Sound</string>
+				<string>Low Smooth 1</string>
+				<string>Low Smooth 2</string>
+				<string>Tick</string>
+				<string>Tink</string>
+				<string>Tock</string>
+				<string>Wii</string>
+				<string>Custom Sound 1</string>
+				<string>Custom Sound 2</string>
+				<string>Custom Sound 3</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+				<integer>4</integer>
+				<integer>5</integer>
+				<integer>6</integer>
+				<integer>7</integer>
+				<integer>8</integer>
+				<integer>9</integer>
+				<integer>10</integer>
+				<integer>11</integer>
+				<integer>12</integer>
+				<integer>13</integer>
+				<integer>14</integer>
+				<integer>15</integer>
+				<integer>16</integer>
+				<integer>17</integer>
+				<integer>18</integer>
+				<integer>19</integer>
+				<integer>20</integer>
+				<integer>21</integer>
+				<integer>22</integer>
+				<integer>23</integer>
+				<integer>24</integer>
+				<integer>25</integer>
+				<integer>26</integer>
+				<integer>27</integer>
+				<integer>28</integer>
+				<integer>29</integer>
+				<integer>30</integer>
+				<integer>31</integer>
+				<integer>32</integer>
+			</array>
+		</dict>
+       <dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Custom Sounds</string>
+			<key>footerText</key>
+			<string>You can put up to 3 different custom sounds. Place them in /Library/TapMe/Sounds/ and name them exactly: Custom1 - Custom2 - Custom3. They must be .caf files. Upon placing them there with the correct name and extension, select your custom sound above, by selecting Custom Sound 1 or 2 or 3.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Feel free to contact me in case of any bugs or issues.</string>
+			<key>label</key>
+			<string>Contact Me:</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>Twitter</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>icon</key>
+			<string>twitter.png</string>
+			<key>label</key>
+			<string>@its_alex_png</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>Reddit</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>icon</key>
+			<string>reddit.png</string>
+			<key>label</key>
+			<string>/u/alex_png</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>GitHub</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>icon</key>
+			<string>github.png</string>
+			<key>label</key>
+			<string>github.com/alexPNG</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>Email</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>icon</key>
+			<string>email.png</string>
+			<key>label</key>
+			<string>alex.png.cc@gmail.com</string>
+		</dict>
+       <dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Support me and my work in case you appreciate it and would like to support me.</string>
+			<key>label</key>
+			<string>Support My Work:</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>PayPal</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>icon</key>
+			<string>paypal.png</string>
+			<key>label</key>
+			<string>paypal.me/devalexpng</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Check out my other tweaks, they’re all available in my repository.</string>
+			<key>label</key>
+			<string>Tweak Repository:</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>Repository</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>icon</key>
+			<string>repo.png</string>
+			<key>label</key>
+			<string>https://alexpng.github.io</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>TapMe by alex_png</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>TapMe</string>
+</dict>
+</plist>

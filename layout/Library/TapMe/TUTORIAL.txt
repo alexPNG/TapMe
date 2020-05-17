@@ -1,0 +1,20 @@
+—— CUSTOM SOUNDS TUTORIAL ——
+
+- Custom sounds must be .caf files;
+- You can have up to 3 different custom sounds;
+- Place then in the Sounds folder and rename them respectively to:
+
+   Custom1
+   Custom2
+   Custom3
+
+(Case sensitive, so be sure to use the exact names above)
+
+- Their extension should end in .caf
+- To use them, after correctly placing them in the Sounds folder and renaming them, go back to TapMe preferences settings and select your custom sound which should appear at the end, titled:
+
+  Custom Sound 1
+  Custom Sound 2
+  Custom Sound 3
+
+
