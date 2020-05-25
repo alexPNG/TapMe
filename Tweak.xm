@@ -64,7 +64,8 @@ static inline void playSound(int soundID) {
     if (lastPlayedSoundID != soundID) {
         // do not recreate it every time if not needed
         AudioServicesDisposeSystemSoundID(selectedSound);
-        AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:getSoundPathForID(soundID)], &selectedSound);
+        AudioServicesCreateSystemSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:getSoundPathForID(soundID)], &selectedSound);
+        lastPlayedSoundID = soundID;
     }
     AudioServicesPlaySystemSound(selectedSound);
 }
@@ -75,7 +76,7 @@ static void refreshPrefs() {
     CFArrayRef keyList = CFPreferencesCopyKeyList(CFSTR("com.alexpng.tapme"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
 
     if (keyList) {
-        settings = (NSMutableDictionary *)CFPreferencesCopyMultiple(keyList, CFSTR("com.alexpng.tapme"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+        settings = (__bridge NSMutableDictionary *)CFPreferencesCopyMultiple(keyList, CFSTR("com.alexpng.tapme"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
         CFRelease(keyList);
     } else {
         settings = nil;
