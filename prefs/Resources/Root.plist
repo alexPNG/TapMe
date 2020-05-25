@@ -145,7 +145,6 @@
 				<string>Press Click 2</string>
 				<string>Quack</string>
 				<string>Rick and Morty 1</string>
-
 				<string>Rick and Morty 2</string>
 				<string>Rick and Morty 3</string>
 				<string>Rick and Morty 4</string>
@@ -203,7 +202,7 @@
 			<key>label</key>
 			<string>Custom Sounds</string>
 			<key>footerText</key>
-			<string>You can put up to 3 different custom sounds. Place them in /Library/TapMe/Sounds/ and name them exactly: Custom1 - Custom2 - Custom3. They must be .caf files. Upon placing them there with the correct name and extension, select your custom sound above, by selecting Custom Sound 1 or 2 or 3.</string>
+			<string>You can put up to 3 different custom sounds. Place them in /Library/TapMe/Sounds/ and name them exactly: Custom1.caf – Custom2.caf – Custom3.caf. They must be .caf files. Upon placing them there with the correct name and extension, select your custom sound above, by selecting Custom Sound 1 or 2 or 3.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
