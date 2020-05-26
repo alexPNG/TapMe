@@ -1,7 +1,7 @@
 Package: com.alexpng.tapme
 Name: TapMe
 Description: Give sound to your icons and folders when you tap them!
-Version: 1.1
+Version: 1.2
 Section: Tweaks
 Architecture: iphoneos-arm
 Depends: mobilesubstrate

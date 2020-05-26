@@ -5,6 +5,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = TapMe
 TapMe_FILES = Tweak.xm
+TapMe_CFLAGS = -fobjc-arc
 
 SUBPROJECTS += prefs
 

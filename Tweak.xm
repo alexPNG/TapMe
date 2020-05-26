@@ -1,6 +1,6 @@
-//TapMe - Give sound to your icons and folders when you tap them!
-//Created by alex_png
-//https://github.com/alexPNG
+// TapMe - Give sound to your icons and folders when you tap them!
+// Created by alex_png <https://github.com/alexPNG>
+// Cleaned up by p0358 <https://github.com/p0358>
 
 #import <AudioToolbox/AudioServices.h>
 
@@ -8,28 +8,108 @@
 static NSMutableDictionary *settings;
 static BOOL enabled;
 static BOOL useHaptic;
-static int sounds;
-static NSInteger hapticType;
+static int sounds = -1;
+static NSInteger hapticType = -1;
+static SystemSoundID selectedSound = 0;
+
+static inline NSString* getSoundPathForID(int soundID) {
+    switch (soundID) {
+        case 1: return @"/Library/TapMe/Sounds/1-Bubble1.caf"; break;
+        case 2: return @"/Library/TapMe/Sounds/2-Bubble2.caf"; break;
+        case 3: return @"/Library/TapMe/Sounds/3-CardiBCorona.caf"; break;
+        case 4: return @"/Library/TapMe/Sounds/4-CardiBHehe.caf"; break;
+        case 5: return @"/Library/TapMe/Sounds/5-CardiBOkur.caf"; break;
+        case 6: return @"/Library/TapMe/Sounds/6-Fart1.caf"; break;
+        case 7: return @"/Library/TapMe/Sounds/7-Fart2.caf"; break;
+        case 8: return @"/Library/TapMe/Sounds/8-Gentle.caf"; break;
+        case 9: return @"/Library/TapMe/Sounds/9-Lullaby.caf"; break;
+        case 10: return @"/Library/TapMe/Sounds/10-MeCago.caf"; break;
+        case 11: return @"/Library/TapMe/Sounds/11-Moan.caf"; break;
+        case 12: return @"/Library/TapMe/Sounds/12-Ouch.caf"; break;
+        case 13: return @"/Library/TapMe/Sounds/13-Pling.caf"; break;
+        case 14: return @"/Library/TapMe/Sounds/14-Pong.caf"; break;
+        case 15: return @"/Library/TapMe/Sounds/15-PressClick1.caf"; break;
+        case 16: return @"/Library/TapMe/Sounds/16-PressClick2.caf"; break;
+        case 17: return @"/Library/TapMe/Sounds/17-Quack.caf"; break;
+        case 18: return @"/Library/TapMe/Sounds/18-RickAndMorty1.caf"; break;
+        case 19: return @"/Library/TapMe/Sounds/19-RickAndMorty2.caf"; break;
+        case 20: return @"/Library/TapMe/Sounds/20-RickAndMorty3.caf"; break;
+        case 21: return @"/Library/TapMe/Sounds/21-RickAndMorty4.caf"; break;
+        case 22: return @"/Library/TapMe/Sounds/22-RobloxOof.caf"; break;
+        case 23: return @"/Library/TapMe/Sounds/23-Siri.caf"; break;
+        case 24: return @"/Library/TapMe/Sounds/24-Smooth1.caf"; break;
+        case 25: return @"/Library/TapMe/Sounds/25-Smooth2.caf"; break;
+        case 26: return @"/Library/TapMe/Sounds/26-Tick.caf"; break;
+        case 27: return @"/Library/TapMe/Sounds/27-Tink.caf"; break;
+        case 28: return @"/Library/TapMe/Sounds/28-Tock.caf"; break;
+        case 29: return @"/Library/TapMe/Sounds/29-Wii.caf"; break;
+        case 30: return @"/Library/TapMe/Sounds/Custom1.caf"; break;
+        case 31: return @"/Library/TapMe/Sounds/Custom2.caf"; break;
+        case 32: return @"/Library/TapMe/Sounds/Custom2.caf"; break;
+
+        default: return @"/Library/TapMe/Sounds/6-Fart1.caf";
+    }
+}
+
+static int lastPlayedSoundID = -1;
+static inline void playSound(int soundID) {
+    if (!enabled) return;
+
+    if (useHaptic) switch (hapticType) {
+        case 1: AudioServicesPlaySystemSound(1519); break;
+        case 2: AudioServicesPlaySystemSound(1520); break;
+        case 3: AudioServicesPlaySystemSound(1521); break;
+    }
+
+    if (lastPlayedSoundID != soundID) {
+        // do not recreate it every time if not needed
+        AudioServicesDisposeSystemSoundID(selectedSound);
+        AudioServicesCreateSystemSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:getSoundPathForID(soundID)], &selectedSound);
+        lastPlayedSoundID = soundID;
+    }
+    AudioServicesPlaySystemSound(selectedSound);
+}
 
 // Preferences refresh
 static void refreshPrefs() {
-CFArrayRef keyList = CFPreferencesCopyKeyList(CFSTR("com.alexpng.tapme"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
-  if(keyList) {
-    settings = (NSMutableDictionary *)CFPreferencesCopyMultiple(keyList, CFSTR("com.alexpng.tapme"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
-    CFRelease(keyList);
-  } else {
-    settings = nil;
-  }
-  if (!settings) {
-    settings = [NSMutableDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.alexpng.tapme.plist"];
-  }
-  enabled = [([settings objectForKey:@"enabled"] ?: @(YES)) boolValue];
-  useHaptic = [([settings objectForKey:@"useHaptic"] ?: @(YES)) boolValue];
-sounds = [([settings objectForKey:@"sounds"] ?: @(6)) integerValue];
-hapticType = [[settings objectForKey:@"hapticType"] intValue];
-	}
+
+    CFArrayRef keyList = CFPreferencesCopyKeyList(CFSTR("com.alexpng.tapme"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+
+    if (keyList) {
+        settings = (__bridge NSMutableDictionary *)CFPreferencesCopyMultiple(keyList, CFSTR("com.alexpng.tapme"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+        CFRelease(keyList);
+    } else {
+        settings = nil;
+    }
+    if (!settings) {
+        settings = [NSMutableDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.alexpng.tapme.plist"];
+    }
+    
+    enabled = [([settings objectForKey:@"enabled"] ?: @(YES)) boolValue];
+    useHaptic = [([settings objectForKey:@"useHaptic"] ?: @(YES)) boolValue];
+    int soundsTmp = [([settings objectForKey:@"sounds"] ?: @(6)) integerValue];
+    NSInteger hapticTypeTmp = [[settings objectForKey:@"hapticType"] intValue];
+
+    if (sounds != -1 && sounds != soundsTmp) {
+        // sound preference changed, play the preview
+        playSound(soundsTmp);
+    }
+    sounds = soundsTmp;
+
+    if (hapticType != -1 && hapticType != hapticTypeTmp) {
+        // haptic preference changed, "play" the preview
+        switch (hapticTypeTmp) {
+            case 1: AudioServicesPlaySystemSound(1519); break;
+            case 2: AudioServicesPlaySystemSound(1520); break;
+            case 3: AudioServicesPlaySystemSound(1521); break;
+        }
+    }
+    hapticType = hapticTypeTmp;
+
+}
+
 static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
-  refreshPrefs();
+    refreshPrefs();
 }
 
 // I was going to take a different approach to preview the sounds in the preferences
@@ -40,1118 +120,24 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 // Hooking everything for the sounds and Haptic Feedback
 // iOS 13
 %hook SBHIconManager
-
 - (void)iconTapped:(id)arg1 {
 	%orig;
-
-// Sound 1
-if (enabled && sounds == 1) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
+    if (enabled)
+        playSound(sounds);
 }
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/1-Bubble1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 2
-if (enabled && sounds == 2) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/2-Bubble2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 3
-if (enabled && sounds == 3) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/3-CardiBCorona.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 4
-if (enabled && sounds == 4) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/4-CardiBHehe.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 5
-if (enabled && sounds == 5) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/5-CardiBOkur.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 6
-if (enabled && sounds == 6) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/6-Fart1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 7
-if (enabled && sounds == 7) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/7-Fart2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 8
-if (enabled && sounds == 8) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/8-Gentle.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 9
-if (enabled && sounds == 9) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/9-Lullaby.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 10
-if (enabled && sounds == 10) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/10-MeCago.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 11
-if (enabled && sounds == 11) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/11-Moan.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 12
-if (enabled && sounds == 12) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/12-Ouch.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 13
-if (enabled && sounds == 13) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/13-Pling.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 14
-if (enabled && sounds == 14) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/14-Pong.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 15
-if (enabled && sounds == 15) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/15-PressClick1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 16
-if (enabled && sounds == 16) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/16-PressClick2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 17
-if (enabled && sounds == 17) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/17-Quack.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 18
-if (enabled && sounds == 18) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/18-RickAndMorty1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 19
-if (enabled && sounds == 19) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/19-RickAndMorty2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 20
-if (enabled && sounds == 20) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/20-RickAndMorty3.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 21
-if (enabled && sounds == 21) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/21-RickAndMorty4.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 22
-if (enabled && sounds == 22) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/22-RobloxOof.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 23
-if (enabled && sounds == 23) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/23-Siri.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 24
-if (enabled && sounds == 24) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/24-Smooth1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 25
-if (enabled && sounds == 25) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/25-Smooth2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 26
-if (enabled && sounds == 26) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/26-Tick.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 27
-if (enabled && sounds == 27) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/27-Tink.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 28
-if (enabled && sounds == 28) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/28-Tock.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 29
-if (enabled && sounds == 29) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/29-Wii.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 30
-if (enabled && sounds == 30) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/Custom1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 31
-if (enabled && sounds == 31) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/Custom2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 32
-if (enabled && sounds == 32) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/Custom3.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-}
-
 %end
 
 // iOS 11 - 12
 %hook SBIconController
-
 - (void)iconTapped:(id)arg1 {
 	%orig;
-
-// Sound 1
-if (enabled && sounds == 1) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
+    if (enabled)
+        playSound(sounds);
 }
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/1-Bubble1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 2
-if (enabled && sounds == 2) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/2-Bubble2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 3
-if (enabled && sounds == 3) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/3-CardiBCorona.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 4
-if (enabled && sounds == 4) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/4-CardiBHehe.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 5
-if (enabled && sounds == 5) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/5-CardiBOkur.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 6
-if (enabled && sounds == 6) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/6-Fart1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 7
-if (enabled && sounds == 7) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/7-Fart2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 8
-if (enabled && sounds == 8) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/8-Gentle.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 9
-if (enabled && sounds == 9) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/9-Lullaby.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 10
-if (enabled && sounds == 10) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/10-MeCago.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 11
-if (enabled && sounds == 11) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/11-Moan.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 12
-if (enabled && sounds == 12) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/12-Ouch.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 13
-if (enabled && sounds == 13) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/13-Pling.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 14
-if (enabled && sounds == 14) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/14-Pong.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 15
-if (enabled && sounds == 15) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/15-PressClick1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 16
-if (enabled && sounds == 16) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/16-PressClick2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 17
-if (enabled && sounds == 17) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/17-Quack.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 18
-if (enabled && sounds == 18) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/18-RickAndMorty1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 19
-if (enabled && sounds == 19) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/19-RickAndMorty2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 20
-if (enabled && sounds == 20) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/20-RickAndMorty3.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 21
-if (enabled && sounds == 21) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/21-RickAndMorty4.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 22
-if (enabled && sounds == 22) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/22-RobloxOof.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 23
-if (enabled && sounds == 23) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/23-Siri.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 24
-if (enabled && sounds == 24) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/24-Smooth1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 25
-if (enabled && sounds == 25) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/25-Smooth2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 26
-if (enabled && sounds == 26) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/26-Tick.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 27
-if (enabled && sounds == 27) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/27-Tink.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 28
-if (enabled && sounds == 28) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/28-Tock.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 29
-if (enabled && sounds == 29) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/29-Wii.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 30
-if (enabled && sounds == 30) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/Custom1.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 31
-if (enabled && sounds == 31) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/Custom2.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-// Sound 32
-if (enabled && sounds == 32) {
-if (enabled && useHaptic && hapticType == 1) {
-AudioServicesPlaySystemSound(1519);
-}
-if (enabled && useHaptic && hapticType == 2) {
-AudioServicesPlaySystemSound(1520);
-}
-if (enabled && useHaptic && hapticType == 3) {
-AudioServicesPlaySystemSound(1521);
-}
-SystemSoundID selectedSound = 0;
-AudioServicesDisposeSystemSoundID(selectedSound);
-AudioServicesCreateSystemSoundID((CFURLRef)[NSURL fileURLWithPath:[NSString stringWithFormat:@"/Library/TapMe/Sounds/Custom3.caf"]],&selectedSound);
-AudioServicesPlaySystemSound(selectedSound);
-}
-
-}
-
-
-
-
 %end
 
 // Fetch preferences update
 %ctor {
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback) PreferencesChangedCallback, CFSTR("com.alexpng.tapme.prefschanged"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 	refreshPrefs();
-
 }
